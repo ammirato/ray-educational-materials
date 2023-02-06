@@ -1,8 +1,8 @@
-import ray
-from ray.data.preprocessors import MinMaxScaler
-from ray.air.config import ScalingConfig
-from ray.train.xgboost import XGBoostTrainer
 import anyscale
+import ray
+from ray.air.config import ScalingConfig
+from ray.data.preprocessors import MinMaxScaler
+from ray.train.xgboost import XGBoostTrainer
 
 # Read Parquet file to Ray Dataset.
 dataset = ray.data.read_parquet(
