@@ -4,6 +4,8 @@ from ray.air.config import ScalingConfig
 from ray.data.preprocessors import MinMaxScaler
 from ray.train.xgboost import XGBoostTrainer
 
+ray.init()
+
 ########
 # DATA #
 ########
