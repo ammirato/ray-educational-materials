@@ -4,6 +4,10 @@ from ray.air.config import ScalingConfig
 from ray.data.preprocessors import MinMaxScaler
 from ray.train.xgboost import XGBoostTrainer
 
+########
+# DATA #
+########
+
 # Read Parquet file to Ray Dataset.
 dataset = ray.data.read_parquet(
     "s3://anyscale-training-data/intro-to-ray-air/nyc_taxi_2021.parquet"
@@ -20,17 +24,21 @@ valid_dataset = valid_dataset.repartition(num_blocks=5)
 # Define a preprocessor to normalize the columns by their range.
 preprocessor = MinMaxScaler(columns=["trip_distance", "trip_duration"])
 
+############
+# TRAINING #
+############
+
 trainer = XGBoostTrainer(
     label_column="is_big_tip",
     num_boost_round=50,
     scaling_config=ScalingConfig(
         num_workers=5,
-        use_gpu=True,
+        use_gpu=False,  # True for the GPU training, 1 GPU per worker
     ),
     params={
         "objective": "binary:logistic",
         "eval_metric": ["logloss", "error"],
-        "tree_method": "approx",
+        "tree_method": "approx",  # "gpu_hist" for GPU training
     },
     datasets={"train": train_dataset, "valid": valid_dataset},
     preprocessor=preprocessor,
@@ -43,8 +51,17 @@ result = trainer.fit()
 training_accuracy = 1 - result.metrics['train-error']
 validation_accuracy = 1 - result.metrics['valid-error']
 iterations = result.metrics['training_iteration']
+
+##############################
+# Report metrics to Anyscale #
+##############################
+
 anyscale.job.output({
     "training_iterations": iterations,
     "training_accuracy": training_accuracy,
     "validation_accuracy": validation_accuracy
 })
+
+# Further reading
+# 1. Tutorial on Batch Training with Ray Datasets: https://docs.ray.io/en/master/data/examples/batch_training.html
+# 2. Ray Data - key concepts: https://docs.ray.io/en/master/data/key-concepts.html
